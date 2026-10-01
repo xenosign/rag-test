@@ -23,6 +23,8 @@ ALPHA_D = "알파벳카드D BOLD"
 ALPHA_S = "알파벳카드S BOLD"
 ALPHA_T = "알파벳카드T BOLD"
 
+ALL_CARDS = [GREEN, PINK, HAENGBOK, KYOWON, NEXEN, GENESIS, HONORS, ALPHA_D, ALPHA_S, ALPHA_T]
+
 # 공백 제거·소문자로 정규화한 질문에서 찾을 별칭
 ALIASES = {
     GREEN: ["green", "그린"],

@@ -7,6 +7,7 @@ API 키는 .env 의 ANTHROPIC_API_KEY 에서 읽는다.
 """
 import argparse
 import sys
+from collections.abc import Iterator
 
 import anthropic
 from dotenv import load_dotenv
@@ -37,21 +38,51 @@ def format_documents(hits: list[dict]) -> str:
     return "<documents>\n" + "\n".join(docs) + "\n</documents>"
 
 
+REFUSAL_MESSAGE = "요청이 거절되었습니다. 질문을 바꿔서 다시 시도해 주세요."
+
+
+def user_message(question: str, hits: list[dict], cards: list[str] | None) -> str:
+    # 검색 범위를 알려 주지 않으면 "다른 카드는 확인되지 않습니다" 같은 불필요한 단서를 붙인다
+    scope = f"검색 대상 카드: {', '.join(cards)} (사용자가 지정했거나 질문에서 언급한 카드)" if cards else "검색 대상 카드: 전체"
+    return f"{format_documents(hits)}\n\n{scope}\n질문: {question}"
+
+
+def request_params(question: str, hits: list[dict], cards: list[str] | None = None) -> dict:
+    return {
+        "model": MODEL,
+        "max_tokens": 16000,
+        "betas": ["server-side-fallback-2026-07-01"],
+        "fallbacks": "default",  # 안전 분류기가 오탐으로 거절하면 서버에서 대체 모델로 재시도
+        "output_config": {"effort": "medium"},
+        "system": SYSTEM_PROMPT,
+        "messages": [{"role": "user", "content": user_message(question, hits, cards)}],
+    }
+
+
 def answer(question: str, client: anthropic.Anthropic, k: int = TOP_K) -> tuple[str, list[dict]]:
     hits = search(question, k=k)
-    response = client.beta.messages.create(
-        model=MODEL,
-        max_tokens=16000,
-        betas=["server-side-fallback-2026-07-01"],
-        fallbacks="default",  # 안전 분류기가 오탐으로 거절하면 서버에서 대체 모델로 재시도
-        output_config={"effort": "medium"},
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": f"{format_documents(hits)}\n\n질문: {question}"}],
-    )
+    response = client.beta.messages.create(**request_params(question, hits, detect_cards(question)))
     if response.stop_reason == "refusal":
-        return "요청이 거절되었습니다. 질문을 바꿔서 다시 시도해 주세요.", hits
+        return REFUSAL_MESSAGE, hits
     text = "".join(b.text for b in response.content if b.type == "text")
     return text, hits
+
+
+def stream_answer(
+    question: str, hits: list[dict], client: anthropic.Anthropic, cards: list[str] | None = None
+) -> Iterator[str]:
+    """답변 텍스트를 생성되는 대로 내보낸다. 끝내 거절되면 RefusalError.
+
+    서버 측 fallback 이 스트림 도중 일어나도 이미 받은 텍스트는 유효하고 같은 스트림에서 이어진다.
+    """
+    with client.beta.messages.stream(**request_params(question, hits, cards)) as stream:
+        yield from stream.text_stream
+        if stream.get_final_message().stop_reason == "refusal":
+            raise RefusalError(REFUSAL_MESSAGE)
+
+
+class RefusalError(Exception):
+    pass
 
 
 def print_answer(question: str, client: anthropic.Anthropic):

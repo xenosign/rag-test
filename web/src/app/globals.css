@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --surface: #f6f6f4;
+  --line: #e4e4e0;
+  --muted: #6b6b66;
+  --chip: #ecece8;
+  --accent: #2f5bd3;
+  --accent-soft: #e8eefc;
+  --danger: #c2372f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #141414;
+    --foreground: #ededea;
+    --surface: #1d1d1c;
+    --line: #2f2f2d;
+    --muted: #9a9a94;
+    --chip: #2a2a28;
+    --accent: #6e93f0;
+    --accent-soft: #1f2a45;
+    --danger: #f07a72;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-chip: var(--chip);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-noto-sans-kr), "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* 답변 Markdown */
+.answer > * + * {
+  margin-top: 0.75em;
+}
+.answer h1,
+.answer h2,
+.answer h3 {
+  font-weight: 600;
+  margin-top: 1.1em;
+}
+.answer h1,
+.answer h2 {
+  font-size: 1.05rem;
+}
+.answer h3 {
+  font-size: 1rem;
+}
+.answer ul,
+.answer ol {
+  padding-left: 1.25rem;
+}
+.answer ul {
+  list-style: disc;
+}
+.answer ol {
+  list-style: decimal;
+}
+.answer li + li,
+.answer li > ul,
+.answer li > ol {
+  margin-top: 0.25em;
+}
+.answer strong {
+  font-weight: 600;
+}
+.answer code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--chip);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+.answer table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.answer th,
+.answer td {
+  border: 1px solid var(--line);
+  padding: 0.4em 0.7em;
+  text-align: left;
+  vertical-align: top;
+}
+.answer th {
+  background: var(--surface);
+  font-weight: 600;
+}
