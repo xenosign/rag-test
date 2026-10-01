@@ -10,10 +10,9 @@
 import json
 import re
 from collections import defaultdict
-from pathlib import Path
 
-IN_DIR = Path("extracted")
-OUT_PATH = Path("data/documents.jsonl")
+from rag.paths import DOCUMENTS_PATH as OUT_PATH
+from rag.paths import EXTRACTED_DIR as IN_DIR
 
 INTRO_TITLE = "신용카드 설명서 안내(가입 전 확인 사항)"
 

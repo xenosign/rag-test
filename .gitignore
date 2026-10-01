@@ -1,11 +1,12 @@
-# API 키
+# API 키 (backend/.env)
 .env
 
 # Python
 .venv/
 __pycache__/
+*.egg-info/
 
-# 재생성 가능한 산출물 (index.py 로 다시 만듦)
-data/chroma/
+# 재생성 가능한 산출물 (python -m pipeline.index 로 다시 만듦)
+backend/data/chroma/
 
 .DS_Store

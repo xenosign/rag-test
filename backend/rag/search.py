@@ -1,16 +1,13 @@
 """질문에서 카드명을 감지해 필터를 걸고 Chroma 에서 관련 청크를 검색한다.
 
 사용:
-    .venv/bin/python search.py "제네시스 카드 라운지 몇 번 쓸 수 있어?"
-    .venv/bin/python search.py -k 3 --no-filter "해외 결제 수수료율"
+    python -m rag.search "제네시스 카드 라운지 몇 번 쓸 수 있어?"
+    python -m rag.search -k 3 --no-filter "해외 결제 수수료율"
 """
 import argparse
 import re
-from functools import lru_cache
 
-import chromadb
-
-from index import CHROMA_DIR, COLLECTION, card_key, load_model
+from rag.store import card_key, embed_queries, get_collection
 
 GREEN = "the Green Edition4"
 PINK = "the Pink Edition3"
@@ -52,16 +49,6 @@ def detect_cards(query: str) -> list[str]:
     return list(dict.fromkeys(found))
 
 
-@lru_cache
-def _model():
-    return load_model()
-
-
-@lru_cache
-def _collection():
-    return chromadb.PersistentClient(path=str(CHROMA_DIR)).get_collection(COLLECTION)
-
-
 def search(query: str, k: int = 5, cards: list[str] | None = None, auto_filter: bool = True) -> list[dict]:
     """cards 를 주지 않으면 질문에서 감지한다. 필터 시 해당 카드 청크 + 전체 공통 청크만 검색."""
     if cards is None and auto_filter:
@@ -70,8 +57,8 @@ def search(query: str, k: int = 5, cards: list[str] | None = None, auto_filter: 
     if cards:
         where = {"$or": [{card_key(c): True} for c in cards] + [{"is_common": True}]}
 
-    embedding = _model().encode([query], normalize_embeddings=True).tolist()
-    result = _collection().query(query_embeddings=embedding, n_results=k, where=where)
+    embedding = embed_queries([query])
+    result = get_collection().query(query_embeddings=embedding, n_results=k, where=where)
     return [
         {
             "id": id_,

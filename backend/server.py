@@ -1,6 +1,6 @@
 """RAG 질의응답 API 서버 (FastAPI).
 
-실행 (저장소 루트에서):
+실행 (backend/ 에서):
     .venv/bin/uvicorn server:app --port 8000 --reload
 
 엔드포인트
@@ -22,8 +22,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from answer import TOP_K, RefusalError, stream_answer
-from search import ALL_CARDS, _collection, _model, detect_cards, search
+from rag.answer import TOP_K, RefusalError, stream_answer
+from rag.search import ALL_CARDS, detect_cards, search
+from rag.store import get_collection, get_model
 
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
@@ -31,8 +32,8 @@ ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 첫 질문이 느려지지 않도록 임베딩 모델(~2GB)과 벡터 DB 를 미리 로드
-    _model()
-    _collection()
+    get_model()
+    get_collection()
     app.state.client = anthropic.Anthropic()
     yield
 

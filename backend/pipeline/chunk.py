@@ -9,10 +9,9 @@
 """
 import json
 import re
-from pathlib import Path
 
-IN_PATH = Path("data/documents.jsonl")
-OUT_PATH = Path("data/chunks.jsonl")
+from rag.paths import CHUNKS_PATH as OUT_PATH
+from rag.paths import DOCUMENTS_PATH as IN_PATH
 
 MAX_CHARS = 700
 MIN_CHARS = 150  # 이보다 짧은 마지막 조각은 앞 청크에 붙임 (MAX_CHARS 를 조금 넘을 수 있음)

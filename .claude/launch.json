@@ -3,14 +3,14 @@
   "configurations": [
     {
       "name": "api",
-      "runtimeExecutable": ".venv/bin/uvicorn",
-      "runtimeArgs": ["server:app", "--port", "8000"],
+      "runtimeExecutable": "backend/.venv/bin/uvicorn",
+      "runtimeArgs": ["server:app", "--app-dir", "backend", "--port", "8000"],
       "port": 8000
     },
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "web", "run", "dev"],
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
       "port": 3000
     }
   ]

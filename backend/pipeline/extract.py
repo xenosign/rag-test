@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pymupdf
 
-DATA_DIR = Path("card-data")
-OUT_DIR = Path("extracted")
+from rag.paths import EXTRACTED_DIR as OUT_DIR
+from rag.paths import PDF_DIR as DATA_DIR
 
 # \x07 은 단어 중간("커\x07 피전문점")이나 글머리표 뒤에 끼어 있으므로 뒤 공백까지 제거
 BELL = re.compile(r"\x07 ?")

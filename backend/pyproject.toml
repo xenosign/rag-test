@@ -1,0 +1,26 @@
+[project]
+name = "card-rag-backend"
+version = "0.1.0"
+description = "현대카드 상품설명서 RAG — 데이터 파이프라인과 FastAPI 서버"
+requires-python = ">=3.11"
+dependencies = [
+    # 데이터 파이프라인
+    "pymupdf>=1.28,<2",
+    # 임베딩 + 벡터 저장소
+    "sentence-transformers>=6.1,<7",
+    "torch>=2.14",
+    "chromadb>=1.5,<2",
+    # 답변 생성
+    "anthropic>=1.11,<2",
+    "python-dotenv>=1.2",
+    # API 서버
+    "fastapi>=0.142",
+    "uvicorn[standard]>=0.54",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["rag", "pipeline"]

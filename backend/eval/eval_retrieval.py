@@ -3,11 +3,11 @@
 지표: hit@1, hit@3, hit@5 (상위 k 안에 정답 청크가 하나라도 있는 비율), MRR
 """
 import json
-from pathlib import Path
 
-from search import detect_cards, search
+from rag.paths import EVAL_DIR
+from rag.search import detect_cards, search
 
-EVAL_PATH = Path("eval/retrieval.jsonl")
+EVAL_PATH = EVAL_DIR / "retrieval.jsonl"
 K = 5
 
 

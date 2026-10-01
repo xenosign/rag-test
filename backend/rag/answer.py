@@ -1,9 +1,9 @@
 """검색된 청크를 근거로 Claude 가 질문에 답한다.
 
 사용:
-    .venv/bin/python answer.py "제네시스 카드 라운지 몇 번 쓸 수 있어?"
-    .venv/bin/python answer.py            # 대화형
-API 키는 .env 의 ANTHROPIC_API_KEY 에서 읽는다.
+    python -m rag.answer "제네시스 카드 라운지 몇 번 쓸 수 있어?"
+    python -m rag.answer            # 대화형
+API 키는 backend/.env 의 ANTHROPIC_API_KEY 에서 읽는다.
 """
 import argparse
 import sys
@@ -12,18 +12,24 @@ from collections.abc import Iterator
 import anthropic
 from dotenv import load_dotenv
 
-from search import detect_cards, search
+from rag.paths import ENV_PATH
+from rag.search import ALL_CARDS, detect_cards, search
 
-load_dotenv()
+load_dotenv(ENV_PATH)
 
 MODEL = "claude-opus-5-5"
 TOP_K = 5
 
-SYSTEM_PROMPT = """당신은 현대카드 상품설명서를 근거로 고객 질문에 답하는 상담 도우미입니다.
+# 전체 카드 목록을 알려 주지 않으면, 모든 카드를 다 나열하고도 빠진 카드가 있는지 알 수 없어
+# "나열되지 않은 카드는 확인되지 않습니다" 같은 불필요한 단서를 덧붙인다
+SYSTEM_PROMPT = f"""당신은 현대카드 상품설명서를 근거로 고객 질문에 답하는 상담 도우미입니다.
 
-<documents> 안의 문서 발췌만 근거로 답하세요. 각 문서의 cards 속성은 그 내용이 적용되는 카드이며, "모든 카드 공통"은 전체 카드에 적용됩니다.
+상품설명서가 있는 카드는 다음 {len(ALL_CARDS)}종이 전부입니다: {", ".join(ALL_CARDS)}
 
-- 문서에 없는 내용은 추측하지 말고 "제공된 설명서에서 확인되지 않습니다"라고 답하세요.
+<documents> 안의 문서 발췌만 근거로 답하세요. 각 문서의 cards 속성은 그 내용이 적용되는 카드이며, "모든 카드 공통"은 위 {len(ALL_CARDS)}종 전체에 적용됩니다.
+
+- 질문한 내용이 문서에 없으면 추측하지 말고 "제공된 설명서에서 확인되지 않습니다"라고 답하세요. 이 문장은 사용자가 물어본 것 중 실제로 근거가 없는 부분에만 쓰세요. 답변이 질문 대상 카드를 모두 다뤘다면 다른 카드에 대한 단서를 덧붙이지 마세요.
+- 일부 카드만 근거가 없을 때는 "나머지 카드" 같은 표현 대신 해당 카드 이름을 직접 밝히세요.
 - 수수료율, 연회비, 적립률, 한도처럼 카드마다 다를 수 있는 값은 반드시 해당 카드의 문서에서 가져오세요. 질문에 카드가 특정되지 않았는데 카드별로 값이 다르면 카드별로 나눠 답하세요.
 - 답변의 각 사실 뒤에 근거 문서를 [번호] 형식으로 표시하세요.
 - 한국어로 간결하게 답하고, 숫자·조건은 문서 표현 그대로 옮기세요."""
