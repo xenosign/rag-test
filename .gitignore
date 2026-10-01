@@ -1,0 +1,11 @@
+# API 키
+.env
+
+# Python
+.venv/
+__pycache__/
+
+# 재생성 가능한 산출물 (index.py 로 다시 만듦)
+data/chroma/
+
+.DS_Store

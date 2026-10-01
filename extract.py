@@ -58,6 +58,13 @@ def overlaps(rect: pymupdf.Rect, boxes: list[pymupdf.Rect]) -> bool:
     return any(rect.intersects(b) and (rect & b).get_area() > 0.5 * rect.get_area() for b in boxes)
 
 
+TABLE_COVERAGE_MIN = 0.9
+
+
+def non_space_len(rows: list[list[str | None]]) -> int:
+    return sum(len(re.sub(r"\s", "", c)) for r in rows for c in r if c)
+
+
 def extract_page(page: pymupdf.Page) -> tuple[str, list]:
     tables = page.find_tables().tables
     table_boxes = [pymupdf.Rect(t.bbox) for t in tables]
@@ -73,7 +80,14 @@ def extract_page(page: pymupdf.Page) -> tuple[str, list]:
     for t, box in zip(tables, table_boxes):
         rows = extract_table(t)
         extracted_tables.append([[clean(c) if c else c for c in r] for r in rows])
-        items.append((box.y0, box.x0, table_to_markdown(rows)))
+        # 열 경계를 잘못 잡으면 셀 내용이 통째로 빠지므로(예: 교원웰스 혜택 표),
+        # 표 영역 글자 수 대비 셀 글자 수가 부족하면 해당 영역의 일반 텍스트를 대신 쓴다
+        area_text = clean(page.get_text("text", clip=box, sort=True))
+        if non_space_len(rows) < TABLE_COVERAGE_MIN * non_space_len([[area_text]]):
+            print(f"  [표 추출 불완전 → 텍스트 사용] p{page.number + 1} {rows[0][:2]}")
+            items.append((box.y0, box.x0, area_text.strip()))
+        else:
+            items.append((box.y0, box.x0, table_to_markdown(rows)))
 
     items.sort(key=lambda it: (round(it[0]), it[1]))
     text = "\n\n".join(content for _, _, content in items if content)

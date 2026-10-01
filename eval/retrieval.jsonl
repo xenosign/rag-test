@@ -1,0 +1,18 @@
+{"question": "알파벳카드D BOLD 연회비 얼마야?", "expected": ["s01-c07-0-0"]}
+{"question": "교원웰스 카드 연회비는?", "expected": ["s01-c03-0-0"]}
+{"question": "제네시스 현대카드 the Honors 공항 라운지 몇 번 쓸 수 있어?", "expected": ["s02-c06-3-0"]}
+{"question": "the Green Edition4 해외서비스 수수료율 알려줘", "expected": ["s05-v1-0-0"]}
+{"question": "넥센타이어 카드로 해외 결제하면 수수료 얼마나 붙어?", "expected": ["s05-v2-0-0"]}
+{"question": "카드 해지하면 남은 연회비 돌려받을 수 있어?", "expected": ["s06-0-0", "s06-0-1"]}
+{"question": "리볼빙 수수료는 어떻게 계산돼?", "expected": ["s12-v1-0-0", "s12-v1-0-1", "s12-v2-0-0"]}
+{"question": "국민행복카드로 병원비 결제하면 포인트 적립돼?", "expected": ["s02-c02-0-0"]}
+{"question": "그린 에디션 바우처 받으려면 얼마나 써야 해?", "expected": ["s02-c00-2-0"]}
+{"question": "카드값 연체하면 어떤 불이익이 있어?", "expected": ["s10-0-0"]}
+{"question": "위법계약해지권은 언제까지 행사할 수 있어?", "expected": ["s13-0-0"]}
+{"question": "핑크 에디션 메탈 플레이트 발급 수수료는?", "expected": ["s03-c00-1-0"]}
+{"question": "교원웰스 카드 렌탈료 할인 한도가 어떻게 돼?", "expected": ["s02-c03-0-0"]}
+{"question": "넥센타이어 카드 혜택이 뭐야?", "expected": ["s02-c04-0-0"]}
+{"question": "현금서비스 금리 인하 요구할 수 있어?", "expected": ["s18-v1-0-0", "s18-c02-0-0"]}
+{"question": "알파벳카드T BOLD 해외 결제하면 어떤 혜택 있어?", "expected": ["s02-c09-0-0", "s02-c09-1-0", "s03-c09-1-0"]}
+{"question": "제네시스 카드 연간 바우처 뭐 줘?", "expected": ["s02-c05-2-0", "s02-c06-2-0"]}
+{"question": "알파벳카드S BOLD 커피 할인 돼?", "expected": ["s02-c08-0-1"]}
