@@ -12,6 +12,7 @@
     event: done     data: {}
 """
 import json
+import logging
 import os
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
@@ -27,6 +28,8 @@ from rag.search import ALL_CARDS, detect_cards, search
 from rag.store import get_collection, get_model
 
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -81,6 +84,10 @@ def chat_events(req: ChatRequest, client: anthropic.Anthropic) -> Iterator[str]:
         yield sse("error", {"message": "Claude API 에 연결하지 못했습니다."})
     except anthropic.APIStatusError as e:
         yield sse("error", {"message": f"Claude API 오류 ({e.status_code})"})
+    except Exception:
+        # 검색(Chroma·임베딩) 등 예상 못 한 오류도 error 이벤트로 알려야 클라이언트가 대기 상태에 머물지 않는다
+        logger.exception("chat 처리 중 오류")
+        yield sse("error", {"message": "서버 내부 오류가 발생했습니다."})
     yield sse("done", {})
 
 

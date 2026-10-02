@@ -104,6 +104,12 @@ export default function Home() {
         },
         controller.signal,
       );
+      // done 이벤트 없이 스트림이 끝났다면 서버 쪽에서 연결이 끊긴 것
+      updateAssistant(assistantId, (m) =>
+        m.status === "searching" || m.status === "streaming"
+          ? { status: "error", error: "서버와의 연결이 끊겼습니다. 다시 시도해 주세요." }
+          : {},
+      );
     } catch (e) {
       if (controller.signal.aborted) {
         updateAssistant(assistantId, () => ({ status: "stopped" }));
