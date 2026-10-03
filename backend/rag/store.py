@@ -22,8 +22,17 @@ def card_key(card: str) -> str:
     return CARD_KEY_PREFIX + card
 
 
+def pick_device() -> str:
+    # NVIDIA GPU(Windows/Linux) → Apple GPU(Mac) → CPU 순
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def load_model() -> SentenceTransformer:
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = pick_device()
     model = SentenceTransformer(MODEL_NAME, device=device)
     model.max_seq_length = 1024  # 청크가 최대 ~800자라 충분
     return model
