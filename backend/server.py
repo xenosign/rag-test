@@ -10,6 +10,7 @@
     event: delta    data: {"text": "..."}                   답변 조각 (여러 번)
     event: error    data: {"message": "..."}                실패 시
     event: done     data: {}
+    요청 검증 실패(빈 질문, 알 수 없는 카드 등)는 스트림 대신 422 로 응답
 """
 import json
 import logging
@@ -21,7 +22,7 @@ import anthropic
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from rag.answer import TOP_K, RefusalError, stream_answer
 from rag.search import ALL_CARDS, detect_cards, search
@@ -55,6 +56,14 @@ class ChatRequest(BaseModel):
     # None: 질문에서 카드명 자동 감지 / []: 필터 없이 전체 검색 / [...]: 지정 카드 + 공통
     cards: list[str] | None = None
     k: int = Field(default=TOP_K, ge=1, le=20)
+
+    @field_validator("cards")
+    @classmethod
+    def known_cards(cls, cards: list[str] | None) -> list[str] | None:
+        unknown = set(cards or []) - set(ALL_CARDS)
+        if unknown:
+            raise ValueError(f"알 수 없는 카드: {sorted(unknown)}")
+        return cards
 
 
 def sse(event: str, data: dict) -> str:
@@ -98,10 +107,6 @@ def list_cards() -> dict:
 
 @app.post("/api/chat")
 def chat(req: ChatRequest) -> StreamingResponse:
-    unknown = set(req.cards or []) - set(ALL_CARDS)
-    if unknown:
-        return StreamingResponse(iter([sse("error", {"message": f"알 수 없는 카드: {sorted(unknown)}"}), sse("done", {})]),
-                                 media_type="text/event-stream")
     return StreamingResponse(
         chat_events(req, app.state.client),
         media_type="text/event-stream",

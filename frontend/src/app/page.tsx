@@ -36,6 +36,7 @@ export default function Home() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const nextId = useRef(0);
+  const stickToBottom = useRef(true);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -64,7 +65,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
+    // 위로 올려 읽는 중이면 답변 스트리밍에 끌려 내려가지 않도록, 바닥 근처에 있을 때만 따라간다
+    if (stickToBottom.current) bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages]);
 
   const updateAssistant = (id: number, patch: (m: Extract<Message, { role: "assistant" }>) => Partial<Message>) =>
@@ -75,6 +77,7 @@ export default function Home() {
   async function send(question: string) {
     question = question.trim();
     if (!question || busy) return;
+    stickToBottom.current = true; // 새 질문을 보내면 다시 바닥을 따라간다
     const userId = nextId.current++;
     const assistantId = nextId.current++;
     setMessages((prev) => [
@@ -136,7 +139,13 @@ export default function Home() {
         <CardFilter cards={cards} value={filter} onChange={setFilter} />
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 py-6">
+      <main
+        className="flex-1 overflow-y-auto px-4 py-6"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+        }}
+      >
         {serverError && (
           <div className="mb-4 rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-[14px] text-danger">
             {serverError}

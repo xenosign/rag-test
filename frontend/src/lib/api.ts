@@ -38,7 +38,7 @@ export async function streamChat(
     body: JSON.stringify({ question, cards }),
     signal,
   });
-  if (!res.ok || !res.body) throw new Error(`서버 오류 (${res.status})`);
+  if (!res.ok || !res.body) throw new Error(await errorMessage(res));
 
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = "";
@@ -55,6 +55,17 @@ export async function streamChat(
       if (event) onEvent(event);
     }
   }
+}
+
+/** FastAPI 422 응답의 detail[].msg 를 꺼내고, 없으면 상태 코드만 */
+async function errorMessage(res: Response): Promise<string> {
+  try {
+    const { detail } = await res.json();
+    if (Array.isArray(detail) && detail.length) {
+      return detail.map((d: { msg?: string }) => d.msg?.replace(/^Value error, /, "")).join(" / ");
+    }
+  } catch {}
+  return `서버 오류 (${res.status})`;
 }
 
 function parseEvent(raw: string): ChatEvent | null {
