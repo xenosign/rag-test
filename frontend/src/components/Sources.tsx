@@ -3,6 +3,9 @@
 import { useEffect, useRef } from "react";
 import type { Hit } from "@/lib/api";
 
+/** 클릭한 인용. 같은 번호를 다시 눌러도 새 객체라 스크롤 effect 가 다시 돈다 */
+export type Citation = { index: number };
+
 export function Sources({
   hits,
   open,
@@ -12,13 +15,13 @@ export function Sources({
   hits: Hit[];
   open: boolean;
   onToggle: () => void;
-  highlight: number | null;
+  highlight: Citation | null;
 }) {
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   useEffect(() => {
     if (open && highlight) {
-      itemRefs.current[highlight - 1]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      itemRefs.current[highlight.index - 1]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [open, highlight]);
 
@@ -44,7 +47,7 @@ export function Sources({
                   itemRefs.current[i] = el;
                 }}
                 className={`rounded-lg border p-3 text-[13px] transition-colors ${
-                  highlight === i + 1 ? "border-accent bg-accent-soft" : "border-line bg-surface"
+                  highlight?.index === i + 1 ? "border-accent bg-accent-soft" : "border-line bg-surface"
                 }`}
               >
                 <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">

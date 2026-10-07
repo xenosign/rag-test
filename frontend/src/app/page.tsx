@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Answer } from "@/components/Answer";
 import { CardFilter, type Filter, filterToRequest } from "@/components/CardFilter";
-import { Sources } from "@/components/Sources";
+import { type Citation, Sources } from "@/components/Sources";
 import { fetchCards, streamChat, type Hit } from "@/lib/api";
 
 type Message =
@@ -30,7 +30,7 @@ export default function Home() {
   const [filter, setFilter] = useState<Filter>({ mode: "auto" });
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [openSources, setOpenSources] = useState<Record<number, number | null>>({});
+  const [openSources, setOpenSources] = useState<Record<number, Citation | null>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -192,7 +192,7 @@ export default function Home() {
                   {m.content && (
                     <Answer
                       content={m.content}
-                      onCite={(index) => setOpenSources((s) => ({ ...s, [m.id]: index }))}
+                      onCite={(index) => setOpenSources((s) => ({ ...s, [m.id]: { index } }))}
                     />
                   )}
                   {m.status === "stopped" && <p className="mt-2 text-[13px] text-muted">답변을 중단했습니다.</p>}

@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import anthropic
@@ -23,6 +23,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
+from starlette.concurrency import run_in_threadpool
 
 from rag.answer import TOP_K, RefusalError, stream_answer
 from rag.search import ALL_CARDS, detect_cards, search
@@ -38,7 +39,7 @@ async def lifespan(app: FastAPI):
     # 첫 질문이 느려지지 않도록 임베딩 모델(~2GB)과 벡터 DB 를 미리 로드
     get_model()
     get_collection()
-    app.state.client = anthropic.Anthropic()
+    app.state.client = anthropic.AsyncAnthropic()
     yield
 
 
@@ -70,10 +71,11 @@ def sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-def chat_events(req: ChatRequest, client: anthropic.Anthropic) -> Iterator[str]:
+async def chat_events(req: ChatRequest, client: anthropic.AsyncAnthropic) -> AsyncIterator[str]:
     try:
         cards = detect_cards(req.question) if req.cards is None else req.cards
-        hits = search(req.question, k=req.k, cards=cards)
+        # 임베딩·Chroma 검색은 블로킹이라 스레드풀에서 실행 (이벤트 루프를 막지 않도록)
+        hits = await run_in_threadpool(search, req.question, k=req.k, cards=cards)
         yield sse("sources", {
             "cards": cards,
             "hits": [
@@ -81,7 +83,7 @@ def chat_events(req: ChatRequest, client: anthropic.Anthropic) -> Iterator[str]:
                 for h in hits
             ],
         })
-        for text in stream_answer(req.question, hits, client, cards):
+        async for text in stream_answer(req.question, hits, client, cards):
             yield sse("delta", {"text": text})
     except RefusalError as e:
         yield sse("error", {"message": str(e)})
@@ -106,7 +108,7 @@ def list_cards() -> dict:
 
 
 @app.post("/api/chat")
-def chat(req: ChatRequest) -> StreamingResponse:
+async def chat(req: ChatRequest) -> StreamingResponse:
     return StreamingResponse(
         chat_events(req, app.state.client),
         media_type="text/event-stream",

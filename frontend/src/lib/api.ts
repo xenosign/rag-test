@@ -42,10 +42,16 @@ export async function streamChat(
 
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = "";
+  let pendingCR = false;
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
-    buffer += value;
+    // SSE 줄바꿈은 \r\n, \r, \n 모두 허용되므로 \n 으로 통일한다.
+    // 청크가 \r 로 끝나면 다음 청크의 \n 과 짝일 수 있으니 다음 청크까지 미룬다
+    let chunk = (pendingCR ? "\r" : "") + value;
+    pendingCR = chunk.endsWith("\r");
+    if (pendingCR) chunk = chunk.slice(0, -1);
+    buffer += chunk.replace(/\r\n?/g, "\n");
     // SSE 이벤트는 빈 줄로 구분된다
     let boundary;
     while ((boundary = buffer.indexOf("\n\n")) !== -1) {
@@ -68,13 +74,22 @@ async function errorMessage(res: Response): Promise<string> {
   return `서버 오류 (${res.status})`;
 }
 
+/** SSE 필드 값: 콜론 뒤 공백은 하나만 떼어 낸다 */
+function fieldValue(line: string, name: string): string {
+  const value = line.slice(name.length + 1);
+  return value.startsWith(" ") ? value.slice(1) : value;
+}
+
 function parseEvent(raw: string): ChatEvent | null {
   let type = "";
-  let data = "";
+  const data: string[] = [];
   for (const line of raw.split("\n")) {
-    if (line.startsWith("event:")) type = line.slice(6).trim();
-    else if (line.startsWith("data:")) data += line.slice(5).trim();
+    if (line.startsWith("event:")) type = fieldValue(line, "event").trim();
+    else if (line.startsWith("data:")) data.push(fieldValue(line, "data"));
+    // ":" 로 시작하는 주석(프록시 keep-alive 등)과 그 밖의 필드는 무시
   }
   if (!type) return null;
-  return { type, ...(data ? JSON.parse(data) : {}) } as ChatEvent;
+  // 여러 data: 줄은 줄바꿈으로 이어 하나의 값이 된다
+  const payload = data.join("\n");
+  return { type, ...(payload ? JSON.parse(payload) : {}) } as ChatEvent;
 }

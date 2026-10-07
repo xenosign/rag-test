@@ -7,7 +7,7 @@ API 키는 backend/.env 의 ANTHROPIC_API_KEY 에서 읽는다.
 """
 import argparse
 import sys
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 
 import anthropic
 from dotenv import load_dotenv
@@ -65,25 +65,32 @@ def request_params(question: str, hits: list[dict], cards: list[str] | None = No
     }
 
 
-def answer(question: str, client: anthropic.Anthropic, k: int = TOP_K) -> tuple[str, list[dict]]:
-    hits = search(question, k=k)
-    response = client.beta.messages.create(**request_params(question, hits, detect_cards(question)))
+def answer(
+    question: str, client: anthropic.Anthropic, k: int = TOP_K, cards: list[str] | None = None
+) -> tuple[str, list[dict]]:
+    """cards 를 주지 않으면 질문에서 감지한다 (검색 필터와 프롬프트의 검색 범위에 같이 쓰임)."""
+    if cards is None:
+        cards = detect_cards(question)
+    hits = search(question, k=k, cards=cards)
+    response = client.beta.messages.create(**request_params(question, hits, cards))
     if response.stop_reason == "refusal":
         return REFUSAL_MESSAGE, hits
     text = "".join(b.text for b in response.content if b.type == "text")
     return text, hits
 
 
-def stream_answer(
-    question: str, hits: list[dict], client: anthropic.Anthropic, cards: list[str] | None = None
-) -> Iterator[str]:
+async def stream_answer(
+    question: str, hits: list[dict], client: anthropic.AsyncAnthropic, cards: list[str] | None = None
+) -> AsyncIterator[str]:
     """답변 텍스트를 생성되는 대로 내보낸다. 끝내 거절되면 RefusalError.
 
     서버 측 fallback 이 스트림 도중 일어나도 이미 받은 텍스트는 유효하고 같은 스트림에서 이어진다.
+    async 라서 클라이언트가 연결을 끊으면 태스크가 취소되며 Claude API 스트림도 바로 닫힌다.
     """
-    with client.beta.messages.stream(**request_params(question, hits, cards)) as stream:
-        yield from stream.text_stream
-        if stream.get_final_message().stop_reason == "refusal":
+    async with client.beta.messages.stream(**request_params(question, hits, cards)) as stream:
+        async for text in stream.text_stream:
+            yield text
+        if (await stream.get_final_message()).stop_reason == "refusal":
             raise RefusalError(REFUSAL_MESSAGE)
 
 
@@ -94,7 +101,7 @@ class RefusalError(Exception):
 def print_answer(question: str, client: anthropic.Anthropic):
     cards = detect_cards(question)
     print(f"\n(검색 필터: {', '.join(cards) if cards else '전체'})")
-    text, hits = answer(question, client)
+    text, hits = answer(question, client, cards=cards)
     print(f"\n{text}\n\n근거 문서:")
     for i, h in enumerate(hits, 1):
         cards = "모든 카드 공통" if h["is_common"] else h["cards"]
