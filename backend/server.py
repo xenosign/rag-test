@@ -1,7 +1,7 @@
 """RAG 질의응답 API 서버 (FastAPI).
 
-실행 (backend/ 에서):
-    .venv/bin/uvicorn server:app --port 8000 --reload
+실행 (backend/ 에서, 가상환경 활성화 후 — README 참고):
+    uvicorn server:app --port 8000 --reload
 
 엔드포인트
 - GET  /api/cards  : 검색 필터로 고를 수 있는 카드 목록
