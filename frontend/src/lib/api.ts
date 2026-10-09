@@ -48,7 +48,7 @@ export async function streamChat(
     if (done) break;
     // SSE 줄바꿈은 \r\n, \r, \n 모두 허용되므로 \n 으로 통일한다.
     // 청크가 \r 로 끝나면 다음 청크의 \n 과 짝일 수 있으니 다음 청크까지 미룬다
-    let chunk = (pendingCR ? "\r" : "") + value;
+    let chunk: string = (pendingCR ? "\r" : "") + value;
     pendingCR = chunk.endsWith("\r");
     if (pendingCR) chunk = chunk.slice(0, -1);
     buffer += chunk.replace(/\r\n?/g, "\n");
