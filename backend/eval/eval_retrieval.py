@@ -5,7 +5,8 @@
 import json
 
 from rag.paths import EVAL_DIR
-from rag.search import detect_cards, search
+from rag.cards import detect_cards
+from rag.search import search
 
 EVAL_PATH = EVAL_DIR / "retrieval.jsonl"
 K = 5

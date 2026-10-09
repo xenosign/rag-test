@@ -9,6 +9,7 @@ backend/                 Python — 데이터 파이프라인 + FastAPI 서버
 ├── rag/                 서버·CLI 공용: 경로, 임베딩/벡터 DB, 검색, 답변 생성
 ├── pipeline/            데이터 구축: extract → prepare → chunk → index
 ├── eval/                검색 품질 평가 (retrieval.jsonl)
+├── tests/               pytest — 카드명 감지, 청크 분할, 데이터 산출물 최신 여부
 └── data/                card-data(PDF), extracted, documents/chunks.jsonl, chroma(무시됨)
 frontend/                Next.js 16 채팅 페이지
 ```
@@ -93,3 +94,19 @@ python -m rag.search "넥센타이어 해외 수수료"      # 검색 결과만
 python -m rag.answer "제네시스 라운지 몇 번?"     # 답변 생성
 python -m eval.eval_retrieval                    # 검색 품질 (hit@k, MRR)
 ```
+
+## 테스트
+
+```bash
+# backend/ 에서 (가상환경 활성화)
+pip install -e ".[dev]"
+python -m pytest
+
+# frontend/ 에서
+npm test             # SSE 파서 (node --test)
+npm run lint
+npm run typecheck
+```
+
+`main` 푸시와 PR 마다 GitHub Actions(`.github/workflows/ci.yml`)가 위 검사를 실행합니다.
+백엔드 테스트는 torch·chromadb 없이 돌아가며, `prepare`/`chunk` 코드를 고친 뒤 `data/*.jsonl` 을 다시 만들지 않으면 `test_pipeline_data` 가 실패합니다.

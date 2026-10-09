@@ -13,7 +13,8 @@ import anthropic
 from dotenv import load_dotenv
 
 from rag.paths import ENV_PATH
-from rag.search import ALL_CARDS, detect_cards, search
+from rag.cards import ALL_CARDS, detect_cards
+from rag.search import search
 
 load_dotenv(ENV_PATH)
 

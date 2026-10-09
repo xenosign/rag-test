@@ -26,7 +26,8 @@ from pydantic import BaseModel, Field, field_validator
 from starlette.concurrency import run_in_threadpool
 
 from rag.answer import TOP_K, RefusalError, stream_answer
-from rag.search import ALL_CARDS, detect_cards, search
+from rag.cards import ALL_CARDS, detect_cards
+from rag.search import search
 from rag.store import get_collection, get_model
 
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
